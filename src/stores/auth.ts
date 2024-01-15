@@ -1,39 +1,15 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
 import axios from '@/utils/axios'
-
-type User = {
-  id: number
-  name: string
-  email: string
-  email_verified_at: string
-  created_at: string
-  updated_at: string
-}
+import { useLocalStorage } from '@/composables/localStorage'
 
 type Credentials = {
   email: string
   password: string
-  remember: string
-}
-
-function useLocalStorage<T>(key: string, defaultValue?: T) {
-  const val = ref(defaultValue)
-
-  const storageVal = window.localStorage.getItem(key)
-  if (storageVal) {
-    val.value = JSON.parse(storageVal)
-  }
-
-  watch(val, (newValue) => window.localStorage.setItem(key, JSON.stringify(newValue)), {
-    deep: true
-  })
-
-  return val
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = useLocalStorage<User>('auth.user')
+  const user = useLocalStorage('auth.user')
+  let isSessionVerified = false
 
   async function login(credentials: Credentials) {
     await axios.get('/sanctum/csrf-cookie')
@@ -42,13 +18,31 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = data
   }
 
-  function setUser(u: any) {
-    user.value = u
+  async function logout() {
+    await axios.post('/logout')
+    user.value = {}
+  }
+
+  async function loadUser() {
+    isSessionVerified = true
+    const { data } = await axios.get('api/user')
+    user.value = data
+  }
+
+  async function verifySession() {
+    if (user.value && !isSessionVerified) {
+      try {
+        await loadUser()
+      } catch (err) {
+        user.value = null
+      }
+    }
   }
 
   return {
-    setUser,
+    verifySession,
     user,
-    login
+    login,
+    logout
   }
 })

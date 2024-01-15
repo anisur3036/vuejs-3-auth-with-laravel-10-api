@@ -6,6 +6,5 @@ const auth = useAuthStore()
 <template>
   <main>
     {{ auth.user }}
-    <button @click="auth.setUser({ x: 1 })">Click me</button>
   </main>
 </template>
