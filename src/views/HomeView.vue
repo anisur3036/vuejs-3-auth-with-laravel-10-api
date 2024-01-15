@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    {{ auth.user }}
+    <button @click="auth.setUser({ x: 1 })">Click me</button>
   </main>
 </template>
